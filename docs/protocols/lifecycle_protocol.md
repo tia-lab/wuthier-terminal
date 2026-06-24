@@ -1,21 +1,10 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# PROTOCOL: MBT Cache Lifecycle
+# PROTOCOL: Wuthier Terminal Lifecycle
 
 Version: 1.0
 Status: active
@@ -23,12 +12,14 @@ Scope: entire repository
 
 ## Purpose
 
-Define the mandatory lifecycle for MBT Cache research, design, implementation,
-validation, and review.
+Define the mandatory lifecycle for Wuthier Terminal research, design,
+implementation, validation, and review.
 
-MBT Cache is intended to become production infrastructure. No prototype status
-permits unclear contracts, unbound dependencies, unverifiable benchmarks,
-manual generated-code edits, or storage shortcuts.
+Wuthier Terminal is intended to become the trusted local client boundary for a
+zero-trust legal knowledge platform. No prototype status permits unclear trust
+boundaries, unbound dependencies, unverifiable privacy claims, undocumented
+tokenization behavior, manual generated-code edits, or plaintext leakage into
+AI-facing surfaces.
 
 ## Required Reads
 
@@ -41,6 +32,7 @@ Before any non-trivial task:
 - existing specs under `docs/specs/`
 - existing reviews under `docs/reviews/`
 - target code paths when implementation is requested
+- upstream service, data, or dependency contracts when behavior matters
 
 ## Lifecycle
 
@@ -52,6 +44,8 @@ Output:
 - task class,
 - required reads,
 - required inputs,
+- affected trust zones,
+- affected sensitive-data classes,
 - unknowns,
 - stop/go risks.
 
@@ -64,7 +58,7 @@ Output:
 - protocols read,
 - docs read,
 - source files read,
-- dependency docs read when behavior matters,
+- service or dependency contracts read when behavior matters,
 - observed constraints,
 - hypotheses still open.
 
@@ -108,7 +102,7 @@ Output path:
 - `docs/reviews/[slug]/[slug]_implementation_plan.md`
 
 The plan binds every code file, generated file, dependency change, test,
-benchmark, artifact, and validation command.
+benchmark, security-boundary artifact, evidence path, and validation command.
 
 No code is allowed until the plan is approved.
 
@@ -122,7 +116,8 @@ Implementation must stay within the approved spec and plan.
 
 Testing follows `testing_benchmark_protocol.md`.
 
-Correctness and determinism evidence are required before performance claims.
+Correctness, privacy-boundary, and determinism evidence are required before
+performance claims.
 
 ### Phase 8: Result Review
 
@@ -146,12 +141,18 @@ Stop if:
 
 - required reads are incomplete,
 - the measured object is unclear,
-- schema source contract is unclear,
-- cache storage contract is unclear,
-- Heed payload contract is unclear when payload storage is in scope,
-- SQLite lookup contract is unclear when search or time-machine is in scope,
-- query route contract is unclear when reads are in scope,
-- MBT I/O or trusted-access contract is unclear when MBT bytes are in scope,
+- source data contract is unclear,
+- sensitive-data classes are unclear when detection, redaction, or tokenization
+  is in scope,
+- tokenization contract is unclear when AI-facing routes are in scope,
+- redaction contract is unclear when document, prompt, retrieval, embedding, or
+  model routes are in scope,
+- trust-zone boundary is unclear,
+- Agent Service boundary is unclear when AI-facing work is in scope,
+- Key Service boundary is unclear when tokens, dictionaries, decryption, or
+  rendering are in scope,
+- storage contract is unclear when persistence is in scope,
+- authorization or audit contract is unclear when human rendering is in scope,
 - generated-code ownership is unclear,
 - spec is missing or unapproved,
 - peer audit is missing or blocked,

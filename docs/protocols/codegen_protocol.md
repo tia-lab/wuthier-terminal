@@ -1,31 +1,23 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# PROTOCOL: MBT Cache Codegen
+# PROTOCOL: Wuthier Terminal Codegen
 
 Version: 1.0
 Status: active
-Scope: cache options, descriptor parsing, generator code, generated artifacts
+Scope: generated artifacts, schemas, contract bindings, and generated adapters
 
 ## Purpose
 
-Define how `.proto + MBT options + MBT Cache options` become generated Heed key
-contracts, SQLite key-only lookup schemas, predicate binders, and read/write
-adapter bindings.
+Define how approved source contracts become generated code or generated
+artifacts when a spec permits generation.
+
+This protocol does not approve any generator by itself. Generated tokenizers,
+redactors, route adapters, schema bindings, test fixtures, or service clients
+require a spec, peer audit, and approved implementation plan.
 
 ## Required Reads
 
@@ -39,20 +31,17 @@ adapter bindings.
 
 ## Source Contract
 
-The codegen source of truth is:
+The codegen source of truth must be explicit in the spec. Examples include:
 
-```text
-.proto files + approved MBT options + approved MBT Cache options
-```
+- approved data schemas;
+- approved service interface definitions;
+- approved sensitive-data rule tables;
+- approved redaction or tokenization rule sources;
+- approved test-fixture definitions.
 
-Schemas may live:
-
-- inside this repository as fixtures;
-- in a separate schema repository;
-- inside an application crate.
-
-The generator must receive explicit proto roots, proto file, root message, and
-schema hash. It must not discover schema intent from Rust code.
+The generator must receive explicit input paths, output paths, root contracts,
+and contract hashes when relevant. It must not discover security intent from
+unstructured Rust code.
 
 ## Generated Artifact Rules
 
@@ -60,15 +49,17 @@ schema hash. It must not discover schema intent from Rust code.
 2. Generated files must include a deterministic header.
 3. Generated files must be reproducible by a checked command.
 4. Generated files must not include surfaces absent from the spec.
-5. Generated code must reject unsupported schema and cache lookup shapes before
-   runtime.
-6. Generated code must keep checked and trusted MBT access distinct.
-7. Generated code must not force unrelated schemas to compile.
-8. Generated code must not include serde payload conversion.
-9. Generated code must not write MBT payload bytes into SQLite.
-10. Generated latest and range routes must target Heed directly.
-11. Generated search and time-machine routes must return keys from SQLite and
-    fetch payloads from Heed.
+5. Generated code must reject unsupported input combinations before runtime.
+6. Generated code must keep checked and trusted boundaries distinct when both
+   exist.
+7. Generated code must not force unrelated adapters or schemas to compile.
+8. Generated code must not send plaintext sensitive values to AI-facing routes.
+9. Generated code must not expose Key Service routes to Agent Service or LLM
+   tools.
+10. Generated code must not store token dictionaries or decryption keys in
+    AI-facing stores.
+11. Generated code must preserve deterministic ordering when equality, replay,
+    audit, or benchmarks depend on it.
 
 ## Compile-Surface Rules
 
@@ -80,23 +71,20 @@ Generated-code specs must measure or bound:
 - release build time when runtime performance code is added,
 - dependency graph changes.
 
-Wide schemas require explicit compile-surface evidence.
+Wide generated surfaces require explicit compile-surface evidence.
 
-## Option Rules
+## Option and Rule Rules
 
-MBT Cache options must be centralized and stable.
+New generated options or rule annotations require a spec that defines:
 
-New options require a spec that defines:
-
-- option name,
-- protobuf extension target,
+- option or rule name,
+- source target,
 - allowed values,
 - invalid combinations,
-- descriptor behavior,
+- descriptor or parser behavior,
 - generated runtime behavior,
-- Heed key behavior when relevant,
-- SQLite lookup behavior when relevant,
-- query route behavior when relevant,
+- trust-zone behavior when relevant,
+- storage behavior when relevant,
 - test cases,
 - compatibility risk.
 
@@ -106,9 +94,10 @@ Stop if:
 
 - codegen output cannot be regenerated;
 - generated output requires manual edits;
-- an option has ambiguous behavior;
-- a schema shape compiles but is unsupported at runtime;
-- lookup behavior is inferred without an explicit option or proven fallback
-  rule;
-- codegen introduces schema-specific hardcoding not derived from proto;
-- compile-surface impact is unknown for wide schemas.
+- an option or rule has ambiguous behavior;
+- an input shape compiles but is unsupported at runtime;
+- tokenization, redaction, or route behavior is inferred without an explicit
+  rule or proven fallback;
+- codegen introduces handwritten domain branches not derived from the approved
+  source contract;
+- compile-surface impact is unknown for wide generated surfaces.

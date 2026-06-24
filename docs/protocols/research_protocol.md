@@ -1,21 +1,10 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# PROTOCOL: MBT Cache Research
+# PROTOCOL: Wuthier Terminal Research
 
 Version: 1.0
 Status: active
@@ -34,7 +23,7 @@ does not authorize implementation.
 - this protocol
 - relevant existing specs and reviews
 - relevant source code
-- upstream dependency docs when dependency behavior matters
+- upstream service, data, or dependency docs when behavior matters
 
 ## Research Output
 
@@ -48,6 +37,8 @@ The brief must include:
 - source materials,
 - measured object,
 - candidate approach,
+- affected trust zones,
+- affected sensitive-data classes,
 - evidence table,
 - hypotheses,
 - unknowns,
@@ -62,43 +53,46 @@ Every brief must separate:
 - code-read evidence,
 - run evidence,
 - build evidence,
-- DB evidence,
+- storage evidence,
+- security-boundary evidence,
 - benchmark evidence,
-- schema evidence,
+- data-contract evidence,
 - external-doc evidence,
 - hypotheses.
 
-## MBT Cache Research Minimum
+## Wuthier Research Minimum
 
-For MBT Cache work, research must identify:
+For Wuthier work, research must identify:
 
-- schema source and owner,
-- root message and proto imports,
-- MBT option and MBT Cache option ownership,
-- generated Heed key contract,
-- generated SQLite lookup table, searchable columns, and indexes,
-- latest/range Heed route strategy,
-- search/time-machine SQLite key-only strategy,
-- time-machine Heed context strategy,
-- checked/trusted MBT access strategy,
-- generated-code surface,
-- crate boundary impact,
-- dependency impact,
-- compile-surface risk,
-- runtime benchmark baseline,
-- correctness oracle,
+- source data and owner;
+- sensitive-data classes in scope;
+- detection, tokenization, and redaction candidate approach;
+- token format, stability, tenant or matter scope, and collision assumptions;
+- Human Zone, AI Zone, and Key Zone surfaces touched;
+- Agent Service boundary when AI-facing behavior is in scope;
+- Key Service boundary when tokens, dictionaries, decryption, or rendering are
+  in scope;
+- storage boundary for documents, chunks, embeddings, logs, conversations,
+  token references, and audit events when relevant;
+- authorization and audit requirements when human rendering is in scope;
+- generated-code surface when relevant;
+- crate, service, and dependency impact;
+- compile-surface risk;
+- runtime benchmark baseline when performance is claimed;
+- correctness and privacy oracle;
 - expected failure cases.
 
 ## Stop Gates
 
 Stop research escalation if:
 
-- schema ownership is unknown,
-- Heed payload contract cannot be stated,
-- SQLite lookup contract cannot be stated when relevant,
-- query route boundaries cannot be stated,
-- MBT access contract cannot be stated when relevant,
-- correctness oracle is missing,
+- source data ownership is unknown,
+- sensitive-data classes cannot be stated,
+- tokenization or redaction contract cannot be stated when relevant,
+- Agent Service or Key Service boundaries cannot be stated when relevant,
+- storage boundary cannot be stated when persistence is in scope,
+- authorization or audit behavior cannot be stated when rendering is in scope,
+- correctness and privacy oracle is missing,
 - compile-surface risk is ignored,
 - dependency behavior is assumed but not read,
-- performance baseline cannot be defined.
+- performance baseline cannot be defined when performance is claimed.

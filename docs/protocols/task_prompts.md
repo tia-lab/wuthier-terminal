@@ -1,21 +1,10 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# MBT Cache Protocol Prompts
+# Wuthier Terminal Protocol Prompts
 
 These prompts are reusable task starters. They do not override `AGENTS.md` or
 the protocols.
@@ -31,8 +20,9 @@ Task: prepare a research brief for [slug].
 
 Do not write code. Do not change dependencies. Produce
 docs/reviews/[slug]/[slug]_research_brief.md with measured object, source
-materials, evidence table, hypotheses, unknowns, risks, required decisions
-before spec, and recommended next phase.
+materials, affected trust zones, sensitive-data classes, evidence table,
+hypotheses, unknowns, risks, required decisions before spec, and recommended
+next phase.
 ```
 
 ## Spec Prompt
@@ -44,12 +34,13 @@ brief, and relevant code.
 
 Task: write docs/specs/[slug]_SPEC.md.
 
-Do not write code. The spec must bind source schema, cache schema, Heed
-payload storage, SQLite key-only lookup, latest/range routes,
-search/time-machine routes, MBT I/O and trusted access, codegen, crate
-boundaries, dependencies, determinism, failure behavior, correctness oracle,
-benchmarks, compile-surface budget, runtime budget, code paths, generated
-artifacts, tests, review paths, and approval checklist.
+Do not write code. The spec must bind source data, sensitive-data classes,
+tokenization, redaction, trust zones, Agent Service boundaries, Key Service
+boundaries, storage, prompt and conversation behavior, rendering authorization
+and audit, generated artifacts when relevant, crate and service boundaries,
+dependencies, determinism, failure behavior, correctness and privacy oracle,
+benchmarks, compile-surface budget, runtime budget, code paths, artifacts,
+tests, review paths, and approval checklist.
 ```
 
 ## Peer Audit Prompt
@@ -62,12 +53,13 @@ spec.
 Task: audit docs/specs/[slug]_SPEC.md.
 
 Do not edit the spec in the first pass. Try to falsify measured object clarity,
-schema ownership, Heed payload semantics, SQLite lookup semantics, route
-boundaries, MBT access safety, codegen determinism, crate isolation,
-compile-surface budget, dependency containment, correctness oracle, benchmark
-isolation, failure behavior, and code binding completeness. Write
-docs/reviews/[slug]/[slug]_peer_audit.md and classify exactly
-PEER_AUDIT_PASSED or BLOCKED.
+source data ownership, sensitive-data coverage, tokenization semantics,
+redaction semantics, trust-zone boundaries, Agent Service plaintext exclusion,
+Key Service isolation, storage plaintext exclusion, authorization and audit,
+crate isolation, compile-surface budget, dependency containment, correctness
+and privacy oracle, benchmark isolation, failure behavior, and code binding
+completeness. Write docs/reviews/[slug]/[slug]_peer_audit.md and classify
+exactly PEER_AUDIT_PASSED or BLOCKED.
 ```
 
 ## Implementation Plan Prompt
@@ -80,8 +72,9 @@ the approved spec, and the peer audit.
 Task: write docs/reviews/[slug]/[slug]_implementation_plan.md.
 
 Do not write code. Bind every file to edit/create, generated artifact,
-dependency change, test, benchmark, evidence path, command, expected output,
-risk, and validation step. End with an explicit approval gate before code.
+dependency change, test, benchmark, security-boundary evidence path, command,
+expected output, risk, and validation step. End with an explicit approval gate
+before code.
 ```
 
 ## Implementation Prompt
@@ -108,7 +101,8 @@ Task: run the bound tests and benchmarks.
 
 Do not change expected values, tolerances, or benchmark scope unless
 independent evidence proves the original expectation was wrong. Record command,
-machine metadata, schema identity, Heed/SQLite identity when relevant, dataset
-identity, correctness, determinism, compile-surface output when relevant,
-benchmark output, and limitations. Prepare the result review.
+machine metadata, source data identity, trust zones, sensitive-data classes,
+storage identity when relevant, dataset identity, correctness, privacy,
+determinism, compile-surface output when relevant, benchmark output, and
+limitations. Prepare the result review.
 ```

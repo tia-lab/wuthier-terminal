@@ -1,34 +1,28 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# MBT Cache Agent Contract
+# Wuthier Terminal Agent Contract
 
 Status: active
-Scope: `/home/tia/_DEV/MATHILDE/mbt-cache`
+Scope: `/home/tia/_DEV/RUST/CRATES/wuthier-terminal`
 
-This repository owns the production MBT-native cache database surface. MBT
-Cache stores validated MBT payload bytes in Heed and stores only generated
-lookup keys and predicate columns in SQLite. The public runtime must expose one
-coherent cache API for insert, upsert, delete, latest, range, search, and
-time-machine flows.
+This repository owns the Wuthier Terminal surface: the trusted local client
+boundary for a zero-trust legal knowledge platform. Wuthier Terminal mediates
+between authorized humans, the AI-facing Agent Service, and the isolated Key
+Service. Its contract is to ensure that AI-facing routes operate on tokenized or
+redacted content while authorized humans can render sensitive values only
+through the approved key and authorization boundary.
 
-This repository is not an experiment dump. It may contain benchmark and review
-artifacts, but every artifact must be reproducible, evidence-bound, and tied to
-an explicit contract.
+This repository is not an experiment dump. It may contain benchmark, review, and
+security-analysis artifacts, but every artifact must be reproducible,
+evidence-bound, and tied to an explicit contract.
+
+Stack choices are not approved by this file. Database engines, cryptographic
+algorithms, model providers, OCR engines, embedding engines, UI frameworks, and
+service runtimes remain candidate choices until approved by specs.
 
 ## Inderogable Rules
 
@@ -52,14 +46,14 @@ an explicit contract.
 17. GENERATED CODE MUST COME ONLY FROM APPROVED CODEGEN
 18. SPEED CLAIMS REQUIRE RUN EVIDENCE
 19. COMPILE-TIME CLAIMS REQUIRE BUILD EVIDENCE
-20. MBT CACHE RUNTIME MUST REMAIN SMALL; CODEGEN, BENCHES, TEST SCHEMAS, AND DEV FIXTURES ARE SEPARATE SURFACES
+20. WUTHIER TERMINAL RUNTIME MUST REMAIN SMALL; SERVICE ADAPTERS, BENCHES, TEST FIXTURES, AND DEV TOOLS ARE SEPARATE SURFACES
 21. FIRST SPEC DRAFTS MUST CLOSE PRIOR-SPEC, COMMAND, ARTIFACT, DISPATCH, AND TEST-MIGRATION CONTRACTS BEFORE PEER AUDIT
-22. NO SERDE PAYLOAD PATH IN CACHE RUNTIME
-23. NO OLD MONOLITHIC MBT DEPENDENCY
-24. SQLITE MUST NEVER STORE MBT PAYLOAD BYTES
-25. LATEST AND RANGE MUST USE HEED PAYLOAD ROUTES DIRECTLY
-26. SEARCH AND TIME-MACHINE MUST USE SQLITE FOR KEY-ONLY HIT DISCOVERY AND HEED FOR PAYLOAD REPLAY
-27. TIME-MACHINE CONTEXT MUST BE BUILT FROM HEED, NOT FROM SQLITE PAYLOADS
+22. AI-FACING ROUTES MUST NEVER RECEIVE PLAINTEXT SENSITIVE VALUES
+23. AGENT SERVICE ROUTES MUST NEVER CALL KEY SERVICE ROUTES
+24. KEY DICTIONARIES, DECRYPTION KEYS, AND PLAINTEXT RENDERING MUST NEVER BE EXPOSED TO LLM, RAG, EMBEDDING, OR AGENT TOOL SURFACES
+25. DOCUMENT AND PROMPT FLOWS MUST TOKENIZE OR REDACT BEFORE AI-FACING STORAGE OR MODEL ACCESS
+26. HUMAN RENDERING MUST REQUIRE AUTHORIZATION AND AUDITABLE KEY-SERVICE BOUNDARIES
+27. CONVERSATION MEMORY, RETRIEVAL DATA, EMBEDDINGS, AND AGENT LOGS MUST STORE TOKENIZED OR REDACTED CONTENT ONLY
 ```
 
 **Violation of any rule requires protocol restart.**
@@ -71,9 +65,13 @@ Every non-trivial statement must be grounded by evidence type:
 - Code-read evidence: identify the file and observed behavior.
 - Run evidence: identify the command and observed output.
 - Build evidence: identify command, profile, dirty state, timing, and output.
-- DB evidence: identify Heed or SQLite surface, schema, query, and observed result.
+- Storage evidence: identify the local or remote store, schema, query, and
+  observed result.
+- Security-boundary evidence: identify the route, caller, callee, trust zone,
+  authorization check, and observed allowed or denied behavior.
 - Benchmark evidence: identify command, dataset, profile, machine, and result.
-- Schema evidence: identify proto file, generated file, schema hash, and check command.
+- Data-contract evidence: identify source format, schema or classifier contract,
+  tokenization contract, generated file if any, and check command.
 - External-doc evidence: identify upstream source and date-sensitive claim.
 - Hypothesis: state that it is not proved yet and why it is suspected.
 
@@ -81,32 +79,34 @@ No statement may sound certain if it has not been proved.
 
 ## Repository Boundaries
 
-MBT Cache owns:
+Wuthier Terminal owns:
 
-- MATHILDE cache option interpretation when cache options are approved;
-- descriptor-to-cache schema model contracts;
-- generated Heed key contracts;
-- generated SQLite lookup table contracts;
-- generated predicate-column binders for SQLite;
-- generated key-only search and time-machine hit discovery;
-- direct Heed latest and range payload routes;
-- unified insert, upsert, delete, batch seed, latest, range, search, and
-  time-machine runtime semantics;
-- benchmark and evidence discipline for cache behavior.
+- local trusted client and terminal behavior;
+- file, folder, and repository watch contracts when approved;
+- matter and client selection contracts when approved;
+- prompt tokenization before AI-facing routes;
+- response rendering orchestration through the approved Key Service boundary;
+- local authorization context handling when approved;
+- local audit-event emission when approved;
+- redacted or tokenized conversation persistence when approved;
+- route isolation between Human Zone, AI Zone, and Key Zone;
+- evidence discipline for privacy, security, correctness, and performance.
 
-MBT Cache does not own:
+Wuthier Terminal does not own unless a later approved spec adds that surface:
 
-- the MBT wire/archive format;
-- MBT transport options;
-- JSON, protobuf, CSV, Arrow, Parquet, compression, or transponding adapters;
-- Aggregator, Primitives, Regime, or `math` source-data finality;
-- exchange finality, watermark, closed-bar, or hole-repair semantics;
-- application-specific predicate policy beyond generated searchable fields;
-- application-specific schema ownership.
+- final legal advice or legal correctness of model output;
+- the Agent Service runtime;
+- the Key Service runtime;
+- key-management internals;
+- model-provider behavior;
+- OCR, embedding, database, or cryptographic implementations;
+- organization-wide identity policy;
+- document-source finality, retention, or legal hold policy;
+- stack selection before research, spec, and approval.
 
-Application schemas may live outside this repository. External schema folders
-are allowed when they import approved MBT and MBT Cache options and pass codegen
-checks.
+Application schemas, service contracts, and deployment manifests may live
+outside this repository. External surfaces are allowed only when they pass the
+approved Wuthier data-flow, trust-boundary, and evidence contracts.
 
 ## Mandatory Execution Flow
 
@@ -123,7 +123,8 @@ Every non-trivial task follows this sequence. No skips.
   - code implementation,
   - testing or benchmarking,
   - review or documentation.
-- List required reads, inputs, datasets, configs, and unknowns.
+- List required reads, inputs, datasets, configs, trust boundaries, and
+  unknowns.
 - Ask the minimum clarifying questions only if the task cannot be specified.
 
 ### 2. Context Read (NO CODE)
@@ -133,8 +134,8 @@ Every non-trivial task follows this sequence. No skips.
 - Read relevant protocols under `docs/protocols/`.
 - Read existing specs under `docs/specs/` and reviews under `docs/reviews/`.
 - Read target code paths before proposing edits.
-- For MATHILDE data surfaces, read the relevant upstream contract before using
-  the data in tests or benchmarks.
+- For Wuthier data surfaces, read the relevant upstream contract before using
+  the data in tests, security claims, or benchmarks.
 
 ### 3. Research Brief (NO CODE)
 
@@ -142,7 +143,9 @@ Before a spec can be written, produce a research brief that states:
 
 - measured object,
 - candidate approach,
-- MBT Cache binding surface,
+- Wuthier binding surface,
+- trust zones touched,
+- sensitive-data classes touched,
 - unknowns,
 - risks,
 - evidence already available,
@@ -157,20 +160,23 @@ If a design decision is not in the spec, it must not appear in code.
 Every spec must include:
 
 - goal and non-goals,
-- source schema contract,
-- cache schema contract,
-- Heed payload contract,
-- SQLite lookup contract,
-- query route contract,
-- MBT I/O and trusted-access contract,
-- codegen contract,
+- source data contract,
+- sensitive-data and tokenization contract,
+- redaction contract,
+- trust-zone and route-isolation contract,
+- storage contract,
+- authorization and audit contract,
+- Agent Service boundary contract when relevant,
+- Key Service boundary contract when relevant,
+- human rendering contract when relevant,
+- generated-artifact or codegen contract when relevant,
 - crate and dependency boundaries,
 - determinism policy,
 - failure contract,
 - compile-surface budget,
 - performance budget,
 - benchmark methodology,
-- correctness proof plan,
+- correctness and privacy proof plan,
 - exact code bindings,
 - exact test and artifact bindings,
 - implementation plan requirement,
@@ -198,6 +204,7 @@ Before touching code, write an implementation plan that binds:
 - files to create,
 - generated files,
 - dependency changes,
+- security-boundary artifacts,
 - benchmark artifacts,
 - validation commands,
 - expected outputs,
@@ -213,18 +220,20 @@ The plan must be approved before any code line is changed.
 - Preserve deterministic behavior and explicit failure surfaces.
 - Do not introduce hidden allocations on hot paths without spec justification.
 - Do not use `unwrap`, `expect`, or `panic!` in runtime, codegen, measurement,
-  or reusable support logic.
+  security-boundary, or reusable support logic.
 - Do not add environment variables unless the spec defines default, bounds, and
   operator meaning.
 
 ### 8. Validation
 
 - Run the narrowest correctness checks first.
+- Run privacy and trust-boundary checks before security claims.
 - Run deterministic replay checks before performance claims.
 - Run build-surface checks before claiming compile-time improvement.
 - Run benchmark commands exactly as specified.
 - If validation fails, stop and diagnose. Do not tweak expectations.
-- Record command, environment, input size, build profile, and output.
+- Record command, environment, input size, build profile, trust boundary, and
+  output.
 
 ### 9. Review and Report
 
@@ -239,21 +248,27 @@ The plan must be approved before any code line is changed.
 Work must stop before code if any gate fails:
 
 - Required reads incomplete.
-- Source schema contract is missing.
-- Cache schema contract is missing.
-- Heed payload contract is missing.
-- SQLite lookup contract is missing when search or time-machine is in scope.
-- Query route contract is missing when reads are in scope.
-- MBT I/O or trusted-access contract is missing when MBT bytes are in scope.
-- Codegen contract is missing.
+- Source data contract is missing.
+- Sensitive-data classification contract is missing when redaction or
+  tokenization is in scope.
+- Tokenization contract is missing when AI-facing routes are in scope.
+- Redaction contract is missing when document or prompt content reaches the
+  Agent Service, RAG, embeddings, logs, or LLMs.
+- Trust-zone route contract is missing.
+- Agent Service boundary contract is missing when AI-facing work is in scope.
+- Key Service boundary contract is missing when tokens, keys, dictionaries,
+  decryption, or rendering are in scope.
+- Storage contract is missing when persistence is in scope.
+- Authorization or audit contract is missing when human rendering is in scope.
+- Codegen contract is missing when generated artifacts are touched.
 - Crate boundary or dependency policy is missing.
 - Spec is missing, incomplete, or unapproved.
 - Peer audit is missing or blocked.
 - Implementation plan is missing or unapproved.
 - Exact code/test/artifact bindings are missing.
 - Failure contract is missing.
-- Benchmark methodology is missing.
-- Correctness proof plan is missing.
+- Benchmark methodology is missing for performance claims.
+- Correctness and privacy proof plan is missing.
 - Compile-surface budget is missing for generated-code work.
 - Dependency choice is justified by preference rather than evidence.
 
@@ -286,23 +301,29 @@ Then read task-specific protocols:
 
 If these reads are incomplete, work must stop.
 
-## Zero-Copy and Trusted-Access Rules
+## Zero-Trust and Trusted-Boundary Rules
 
-Zero-copy, low-copy, or trusted-access claims must prove all of:
+Zero-trust, privacy-preserving, secure, isolated, or trusted-client claims must
+prove all of:
 
-- MBT payload bytes match the declared schema;
-- archived data can be validated before trusted access;
-- trusted access is unsafe only at explicitly documented boundaries;
-- SQLite stores key-only hit data and searchable predicate columns, never MBT
-  payload bytes;
-- latest and range routes replay payload bytes directly from Heed;
-- search and time-machine routes use SQLite only for key discovery;
-- time-machine context is fetched from Heed by deterministic key/range logic;
-- read and write paths do not copy payloads beyond spec-allowed copy points;
-- row and key ordering are deterministic when storage is involved;
+- plaintext sensitive values are identified before AI-facing transfer;
+- tokenization and redaction behavior is deterministic where equality,
+  retrieval, audit, or replay depends on it;
+- Agent Service routes do not receive plaintext sensitive values;
+- RAG, embeddings, conversation memory, retrieval logs, and agent logs do not
+  store plaintext sensitive values;
+- Key Service routes are unreachable from Agent Service and LLM tool surfaces;
+- key dictionaries and decryption keys are isolated from AI-facing routes;
+- human rendering requires authorization and emits auditable evidence;
+- token collision, token reuse, token rotation, and missing-token behavior are
+  explicit when tokens are in scope;
+- corrupt, partial, stale, wrong-tenant, wrong-matter, and unauthorized
+  behavior is explicit;
+- read and write paths do not copy sensitive plaintext beyond spec-allowed
+  boundaries;
+- test and benchmark inputs separate synthetic data from real sensitive data;
 - benchmark comparisons use identical logical payloads;
-- warm-cache and cold-cache results are separated when storage is involved;
-- corrupt, partial, old-version, wrong-schema, and missing-row behavior is explicit.
+- warm-cache and cold-cache results are separated when storage is involved.
 
 ## Configuration Hygiene
 
@@ -316,10 +337,10 @@ Zero-copy, low-copy, or trusted-access claims must prove all of:
 New dependencies require a spec binding that states:
 
 - why the dependency is needed;
-- which crate owns it;
+- which crate or service owns it;
 - which alternatives were considered;
 - what version was selected;
-- what correctness or performance risk remains;
+- what correctness, privacy, security, or performance risk remains;
 - how the dependency is validated in tests.
 
 ## Documentation Style

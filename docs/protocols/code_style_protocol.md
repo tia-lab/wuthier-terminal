@@ -1,21 +1,10 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# PROTOCOL: MBT Cache Code Style
+# PROTOCOL: Wuthier Terminal Code Style
 
 Version: 1.0
 Status: active
@@ -23,7 +12,8 @@ Scope: Rust and support code
 
 ## Purpose
 
-Define the minimum code discipline for MBT Cache production and evidence code.
+Define the minimum code discipline for Wuthier Terminal production and evidence
+code.
 
 ## Required Reads
 
@@ -38,7 +28,8 @@ Define the minimum code discipline for MBT Cache production and evidence code.
 
 1. Validation first.
 2. Deterministic ordering.
-3. Panic-free runtime, codegen, persistence, and measurement logic.
+3. Panic-free runtime, codegen, persistence, security-boundary, and measurement
+   logic.
 4. Explicit error handling.
 5. Explicit copy and allocation boundaries.
 6. No hidden defaults.
@@ -48,10 +39,10 @@ Define the minimum code discipline for MBT Cache production and evidence code.
 10. Small modules and explicit types.
 11. No public API by accident.
 12. No benchmark code in production libraries.
-13. No serde payload path in runtime adapters.
-14. No old monolithic MBT dependency.
-15. No MBT payload bytes in SQLite.
-16. No latest/range SQLite route.
+13. No plaintext sensitive values in AI-facing routes.
+14. No Agent Service to Key Service route.
+15. No token dictionary or decryption-key storage in AI-facing surfaces.
+16. No plaintext rendering without approved authorization and audit behavior.
 
 ## Rust Shape
 
@@ -63,17 +54,19 @@ Preferred order inside non-trivial files:
 4. error/result types,
 5. public entrypoints,
 6. validation helpers,
-7. runtime, persistence, or codegen core,
+7. runtime, persistence, route, or adapter core,
 8. artifact/report helpers,
 9. tests only if the approved plan permits colocated unit tests.
 
 `lib.rs` files should export modules and public items only. Move non-trivial
-logic into named modules such as `runtime.rs`, `payload.rs`, `lookup.rs`,
-`schema.rs`, `predicate.rs`, or `adapter_emit.rs`.
+logic into named modules such as `client.rs`, `watch.rs`, `tokenize.rs`,
+`redact.rs`, `agent.rs`, `key_service.rs`, `render.rs`, `audit.rs`, or
+`storage.rs`, according to the approved spec.
 
 ## Error Handling
 
-Runtime, persistence, codegen, and measurement logic must not use:
+Runtime, persistence, codegen, security-boundary, and measurement logic must not
+use:
 
 - `unwrap`,
 - `expect`,
@@ -85,24 +78,26 @@ Runtime, persistence, codegen, and measurement logic must not use:
 
 Use typed errors or explicit result propagation.
 
-## Allocation Discipline
+## Sensitive-Data Discipline
 
-When work claims zero-copy, low-copy, or low-overhead behavior:
+When work touches plaintext, tokens, redaction, encryption, rendering, or
+storage:
 
-- identify all owned buffers,
-- identify all borrowed views,
-- identify all MBT validation steps,
-- identify all Heed-owned boundaries,
-- identify all SQLite-owned boundaries,
-- keep copy points explicit,
-- test or measure allocation behavior when the spec requires it.
+- identify all plaintext buffers;
+- identify all tokenized and redacted buffers;
+- identify all encrypted buffers;
+- identify all borrowed views;
+- identify all Human Zone, AI Zone, and Key Zone boundaries;
+- keep copy points explicit;
+- test plaintext exclusion when the spec requires it.
 
 ## Compile-Surface Discipline
 
-Generated and adapter code must:
+Generated, adapter, and integration code must:
 
-- avoid compiling unrelated schemas;
-- avoid compiling descriptor/codegen dependencies into runtime users;
+- avoid compiling unrelated service adapters;
+- avoid compiling dependency-heavy tools into default runtime users;
 - avoid compiling benchmark support into production libraries;
 - avoid large generated functions unless the spec proves they are required;
-- measure compile impact when wide schemas are involved.
+- measure compile impact when wide schemas, generated code, or dependency-heavy
+  adapters are involved.

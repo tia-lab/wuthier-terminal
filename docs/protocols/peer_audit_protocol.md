@@ -1,21 +1,10 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# PROTOCOL: MBT Cache Peer Audit
+# PROTOCOL: Wuthier Terminal Peer Audit
 
 Version: 1.0
 Status: active
@@ -37,7 +26,7 @@ Default mode is findings-first and no-edit.
 - target research brief
 - target spec
 - relevant source code
-- relevant dependency docs when dependency behavior is material
+- relevant service or dependency docs when behavior is material
 
 ## Spec Audit Lenses
 
@@ -45,23 +34,26 @@ The audit must challenge:
 
 - pre-audit closure gate completeness,
 - measured object clarity,
-- schema source ownership,
-- Heed payload semantics,
-- SQLite lookup semantics,
-- latest/range route boundaries,
-- search/time-machine key-only route boundaries,
-- time-machine context replay semantics,
-- MBT checked/trusted access safety,
-- codegen determinism,
-- generated-code compile surface,
-- crate boundary isolation,
+- source data ownership,
+- sensitive-data class coverage,
+- tokenization semantics,
+- redaction semantics,
+- Human Zone, AI Zone, and Key Zone boundaries,
+- Agent Service reachability and input guarantees,
+- Key Service reachability, dictionary isolation, and rendering guarantees,
+- authorization and audit behavior,
+- storage boundary and plaintext exclusion,
+- conversation memory and retrieval-log behavior,
+- generated-code determinism when relevant,
+- generated-code compile surface when relevant,
+- crate and service boundary isolation,
 - dependency containment,
-- correctness oracle,
+- correctness and privacy oracle,
 - benchmark isolation,
 - performance budget,
 - failure behavior,
 - code binding completeness,
-- generated artifact binding completeness,
+- generated and evidence artifact binding completeness,
 - client or operator interpretation safety.
 
 ## Output
@@ -82,12 +74,14 @@ Block the spec if:
 - the pre-audit closure gate is missing or false,
 - a core assumption is unproved,
 - benchmark cannot prove the intended claim,
-- correctness oracle is weak,
-- schema or cache semantics are ambiguous,
-- Heed payload behavior is under-specified,
-- SQLite lookup behavior is under-specified,
-- route boundaries are under-specified,
-- codegen behavior is under-specified,
+- correctness or privacy oracle is weak,
+- sensitive-data, tokenization, or redaction behavior is ambiguous,
+- trust-zone route boundaries are under-specified,
+- Agent Service boundary is under-specified when AI-facing work is in scope,
+- Key Service boundary is under-specified when tokens or rendering are in scope,
+- authorization or audit behavior is under-specified,
+- storage boundary could allow plaintext leakage,
+- codegen behavior is under-specified when generated code is touched,
 - compile-surface impact is ignored,
 - code bindings are incomplete,
 - dependency behavior is assumed but not verified.

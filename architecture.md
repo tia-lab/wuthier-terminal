@@ -1,544 +1,302 @@
-# mbt-cache architecture
+# wuthier-terminal architecture
 
-This document explains the internal architecture of `mbt-cache`. It is not
-benchmark evidence. Runtime, compile-time, seed, and query-speed claims remain
-bound to result reviews and benchmark artifacts.
+This document explains the intended internal architecture of `wuthier-terminal`
+as derived from `initial-intake.md`. It is not implementation evidence. Privacy,
+security, runtime, compile-time, and performance claims remain bound to specs,
+result reviews, and benchmark artifacts.
 
 ## Scope
 
-`mbt-cache` is a schema-generated local cache database for MBT payloads.
+`wuthier-terminal` is the trusted local client boundary for a zero-trust legal
+knowledge platform.
 
-It owns:
+It owns, when approved by spec:
 
-- a Heed payload store for MBT bytes;
-- a SQLite lookup store for key-only predicate hit discovery;
-- one public cache API over both stores;
-- schema-specific generated cache adapters;
-- benchmark-only crates for evidence.
+- local file, folder, and repository watching;
+- local matter and client selection;
+- local prompt tokenization before AI-facing calls;
+- response rendering orchestration through Key Service;
+- local conversation interface behavior;
+- local audit-event emission;
+- route isolation between Human Zone, AI Zone, and Key Zone.
 
-It does not own feed finality, watermark policy, repair policy, source-data
-semantics, or the MBT wire format.
+It does not own by default:
 
-## Crate Map
+- final legal advice;
+- model-provider behavior;
+- Agent Service internals;
+- Key Service internals;
+- database engine choices;
+- cryptographic algorithm choices;
+- OCR, embedding, or retrieval engine choices;
+- organization-wide identity policy.
 
-```text
-+-------------------------- REPOSITORY MAP --------------------------+
-|                                                                    |
-|  crates/mbt-cache                                                  |
-|      src/cache/api.rs                                              |
-|          public CacheDb API and request types                      |
-|      src/cache/read_session.rs                                     |
-|          payload-only latest/range and indexed search/time-machine |
-|      src/cache/cursor.rs                                           |
-|          opaque route cursor parsing, signatures, and encoding     |
-|      src/cache/fresh_seed.rs                                       |
-|          empty-root seed and atomic publish flow                   |
-|      src/cache/write_batch.rs                                      |
-|          point write/delete commit logic                           |
-|      src/cache/recovery.rs                                         |
-|          Heed/SQLite marker comparison and journal recovery        |
-|      src/cache/state.rs                                            |
-|          schema generation marker and payload checksum             |
-|      src/payload/heed.rs                                           |
-|          Heed key/value payload store                              |
-|      src/index/sqlite.rs                                           |
-|          SQLite open modes and connection setup                    |
-|      src/index/migration.rs                                        |
-|          internal/generated SQLite schema execution                |
-|      src/index/math.rs                                             |
-|          deterministic predicate math functions                    |
-|      src/schema/traits.rs                                          |
-|          generated adapter runtime contract                        |
-|      src/schema/predicate*.rs                                      |
-|          typed predicate AST and text parser                       |
-|                                                                    |
-|  crates/codegen                                                    |
-|      descriptor model and generated cache adapter emitter          |
-|                                                                    |
-|  benchmarks/mbt-cache-benchmarks                                   |
-|      benchmark-only schemas, datasets, harnesses, and evidence     |
-|                                                                    |
-+--------------------------------------------------------------------+
-```
-
-Runtime code does not load descriptors. Codegen code does not participate in
-serving hot paths. Benchmark code is outside the production runtime crate.
-
-## Storage Model
+## Trust Zones
 
 ```text
-+--------------------------- STORAGE MODEL --------------------------+
-|                                                                    |
-|  MBT row bytes                                                     |
-|       |                                                            |
-|       v                                                            |
-|  generated CacheSchema adapter                                     |
-|       |                                                            |
-|       +--> sortable key                                            |
-|       |        |                                                   |
-|       |        v                                                   |
-|       |   Heed payload store                                       |
-|       |        key -> borrowed MBT bytes                           |
-|       |                                                            |
-|       +--> lookup columns                                          |
-|                |                                                   |
-|                v                                                   |
-|           SQLite lookup store                                      |
-|                key columns + predicate columns + state/journal     |
-|                                                                    |
-+--------------------------------------------------------------------+
++----------------------------- TRUST ZONES -----------------------------+
+|                                                                       |
+|  Human Zone                                                           |
+|      authorized user                                                  |
+|      Wuthier Terminal local client                                    |
+|      plaintext may be visible only under approved authorization        |
+|                                                                       |
+|  AI Zone                                                              |
+|      Agent Service                                                    |
+|      extraction, OCR, redacted RAG, embeddings, agent tools, LLMs      |
+|      plaintext sensitive values are forbidden                         |
+|                                                                       |
+|  Key Zone                                                             |
+|      Key Service                                                      |
+|      token dictionaries, decryption authority, rendering authorization |
+|      not reachable from AI Zone                                       |
+|                                                                       |
++-----------------------------------------------------------------------+
 ```
 
-Heed is the only MBT payload store. SQLite never stores MBT payload bytes.
-SQLite returns keys for predicate routes; Heed returns payload slices.
+The core architectural rule is route separation. Wuthier Terminal may call
+Agent Service and Key Service through approved routes. Agent Service must not
+call Key Service.
 
-The same generated key contract is used by seed, writes, latest, range,
-search, and time-machine.
-
-## Open Path
+## High-Level Flow
 
 ```text
-+----------------------------- OPEN PATH ----------------------------+
-|                                                                    |
-|  CacheDb::<S>::open(root, config)                                  |
-|       |                                                            |
-|       +--> PayloadStore::open(root/heed, map_size)                 |
-|       |                                                            |
-|       +--> open_connection(root/sqlite/cache.sqlite)               |
-|       |        -> WAL + FULL synchronous                           |
-|       |        -> temp_store MEMORY                                |
-|       |        -> deterministic math functions                     |
-|       |        -> internal SQLite state tables                     |
-|       |                                                            |
-|       +--> create_generated_schema(S::SQLITE_DDL)                  |
-|       |                                                            |
-|       +--> ensure_initial_markers()                                |
-|                                                                    |
-+--------------------------------------------------------------------+
++---------------------------- SYSTEM FLOW ------------------------------+
+|                                                                       |
+|  plaintext document or prompt                                         |
+|       |                                                               |
+|       v                                                               |
+|  Wuthier Terminal                                                     |
+|       |                                                               |
+|       +--> sensitive-data detection                                   |
+|       +--> tokenization or redaction                                  |
+|       |                                                               |
+|       v                                                               |
+|  Agent Service                                                        |
+|       |                                                               |
+|       +--> extraction / OCR / chunking when approved                  |
+|       +--> redacted retrieval and embeddings                          |
+|       +--> LLM orchestration over tokenized/redacted content          |
+|       |                                                               |
+|       v                                                               |
+|  tokenized response                                                   |
+|       |                                                               |
+|       v                                                               |
+|  Wuthier Terminal                                                     |
+|       |                                                               |
+|       +--> rendering request to Key Service                           |
+|       +--> authorization and audit boundary                           |
+|       |                                                               |
+|       v                                                               |
+|  authorized human-visible answer                                      |
+|                                                                       |
++-----------------------------------------------------------------------+
 ```
 
-Operational opens configure SQLite for durable point mutations. Fresh seed uses
-a separate open mode described below.
+The AI-facing path sees symbols and redacted text. The human-visible path may
+render plaintext only through approved authorization.
 
-## State Markers
+## Client Application
 
-Both stores hold the same `StateMarker` for the schema:
+The client application is trusted. Its responsibilities are spec-bound and may
+include:
 
-- `schema_id`;
-- `schema_hash`;
-- `cache_schema_hash`;
-- generation;
-- payload key count;
-- payload byte count;
-- payload checksum.
+- file watching;
+- repository watching;
+- folder synchronization;
+- conversation interface;
+- prompt tokenization;
+- response rendering orchestration;
+- authentication context;
+- matter selection;
+- client selection;
+- local audit-event creation.
 
-Indexed reads compare Heed and SQLite markers before serving. Fresh seed
-validates markers, row counts, and route smoke checks before publish. Point
-writes advance both markers through one journaled generation transition.
+The client is the only approved bridge between Agent Service and Key Service
+calls. That bridge must not become a service-to-service route.
 
-## Fresh Seed
+## Agent Service Boundary
+
+Agent Service is AI-facing. Its responsibilities are candidates from the intake
+until specs approve exact behavior:
+
+- file ingestion;
+- text extraction;
+- OCR;
+- chunking;
+- redaction verification;
+- embedding generation;
+- redacted RAG;
+- search;
+- context retrieval;
+- agent tools;
+- LLM orchestration.
+
+Agent Service may store only redacted or tokenized documents, chunks,
+embeddings, metadata, and audit metadata. It must not store plaintext sensitive
+values, decryption keys, or key dictionaries.
+
+## Key Service Boundary
+
+Key Service is isolated. Its responsibilities are candidates from the intake
+until specs approve exact behavior:
+
+- key storage;
+- token dictionary;
+- encryption;
+- decryption;
+- rendering;
+- authorization;
+- audit logging.
+
+Key Service must not participate in retrieval, embeddings, or LLM tooling. It
+only renders final human-visible responses for authorized requests.
+
+## File Processing Pipeline
 
 ```text
-+----------------------------- FRESH SEED ---------------------------+
-|                                                                    |
-|  CacheDb::<S>::build_fresh_checked/trusted(final_root, config, src)|
-|       |                                                            |
-|       +--> create private temporary root                           |
-|       |                                                            |
-|       +--> open_fresh_seed(temp_root)                              |
-|       |        -> SQLite journal_mode OFF                          |
-|       |        -> SQLite synchronous OFF                           |
-|       |        -> empty Heed + empty SQLite markers                |
-|       |                                                            |
-|       +--> source.replay_seed(bytes)                               |
-|       |        -> generated checked/trusted seed inserter          |
-|       |        -> generated key validation                         |
-|       |        -> SQLite lookup row insert                         |
-|       |        -> Heed key -> MBT payload write                    |
-|       |        -> marker contribution                              |
-|       |                                                            |
-|       +--> write matching Heed and SQLite markers                  |
-|       |                                                            |
-|       +--> validate temp root                                      |
-|       |        -> SQLite quick_check                               |
-|       |        -> marker comparison                                |
-|       |        -> lookup row count                                 |
-|       |        -> generated route smoke                            |
-|       |                                                            |
-|       +--> rename temp root to final root                          |
-|       |                                                            |
-|       +--> reopen final root and validate again                    |
-|                                                                    |
-+--------------------------------------------------------------------+
++--------------------------- FILE PIPELINE -----------------------------+
+|                                                                       |
+|  new or changed file                                                  |
+|       -> watcher event                                                |
+|       -> content identity or version calculation                      |
+|       -> extraction path approved by spec                             |
+|       -> sensitive-data detection                                     |
+|       -> tokenization or redaction                                    |
+|       -> redacted document version                                    |
+|       -> chunks and embeddings from redacted/tokenized content        |
+|       -> raw transfer copy destroyed or retained only by approved rule |
+|                                                                       |
++-----------------------------------------------------------------------+
 ```
 
-`seed_checked` and `seed_trusted` seed an already opened empty root. The
-`build_fresh_*` APIs build a rebuildable artifact in a temporary root and
-publish it only after validation.
+Move and delete behavior must be specified before implementation. The intake
+suggests that moves can update path metadata without re-indexing, but that
+remains a spec decision.
 
-Checked seed validates MBT bytes through the generated schema boundary.
-Trusted seed is an explicit caller contract that the bytes were already
-validated for the same schema before entering the seed path.
-
-## Point Writes
+## Prompt and Response Pipeline
 
 ```text
-+---------------------------- POINT WRITES --------------------------+
-|                                                                    |
-|  insert / upsert / update / delete                                 |
-|       |                                                            |
-|       +--> writer mutex                                            |
-|       |                                                            |
-|       +--> recover_or_fail()                                       |
-|       |                                                            |
-|       +--> read Heed marker and SQLite marker                      |
-|       |        -> markers must match                               |
-|       |                                                            |
-|       +--> stage SQLite journal rows                               |
-|       |        -> operation                                        |
-|       |        -> generation                                       |
-|       |        -> key                                              |
-|       |        -> old/new row contributions                        |
-|       |                                                            |
-|       +--> mutate Heed payloads and Heed marker                    |
-|       |                                                            |
-|       +--> mutate SQLite lookup rows and SQLite marker             |
-|       |                                                            |
-|       +--> clear journal                                           |
-|                                                                    |
-+--------------------------------------------------------------------+
++------------------------- PROMPT / RESPONSE ---------------------------+
+|                                                                       |
+|  user prompt with plaintext                                           |
+|       -> local sensitive-data detection                               |
+|       -> tokenized prompt                                             |
+|       -> LLM request                                                  |
+|       -> tokenized model response                                     |
+|       -> Key Service render request                                   |
+|       -> authorization check                                          |
+|       -> audit event                                                  |
+|       -> human-visible rendered response                              |
+|                                                                       |
++-----------------------------------------------------------------------+
 ```
 
-Point writes validate MBT bytes before deriving keys. Deletes take a generated
-key buffer. The writer mutex serializes mutation of the two-store state.
+Stored conversation memory must remain tokenized or redacted. Rendering is a
+view operation for an authorized human, not a reason to store plaintext in
+conversation history.
 
-Recovery supports the documented one-generation transition table:
+## Tokenization Architecture
 
-- no journal and matching markers: serve;
-- journal with both stores old: clear journal;
-- journal with both stores new: clear journal;
-- Heed new and SQLite old: roll SQLite forward from the journal;
-- SQLite new and Heed old: unrecoverable;
-- any other marker shape: unrecoverable.
+Token behavior must be approved by spec before implementation.
 
-## Latest Route
+The intake establishes the intended behavior:
 
-```text
-+----------------------------- LATEST -------------------------------+
-|                                                                    |
-|  CacheDb::<S>::latest(request, max_response_bytes, sink)           |
-|       |                                                            |
-|       +--> payload_read_session(ReadMode::Trusted)                 |
-|       |        -> open Heed read transaction                       |
-|       |        -> require Heed marker                              |
-|       |        -> no SQLite transaction                            |
-|       |                                                            |
-|       +--> validate latest time grid and safe bound                |
-|       |                                                            |
-|       +--> S::for_each_route_entity(filter)                        |
-|       |                                                            |
-|       +--> S::write_key(entity, max_closed_time, key)              |
-|       |                                                            |
-|       +--> Heed get_payload(key)                                   |
-|       |                                                            |
-|       +--> sink.accept_latest_mbt(key view, borrowed payload)      |
-|                                                                    |
-+--------------------------------------------------------------------+
-```
+- every sensitive entity receives a stable token inside an approved scope;
+- the same entity maps to the same token inside that scope;
+- the LLM receives the token, not the plaintext value;
+- token rendering requires Key Service authorization.
 
-Latest is a payload-only route. It never opens or queries SQLite. The public
-route uses trusted access because it serves bytes from a previously validated
-cache root.
+Open spec decisions include:
 
-## Range Route
+- token namespace;
+- tenant, client, matter, or repository scope;
+- stability duration;
+- collision handling;
+- rotation behavior;
+- stale-token behavior;
+- token dictionary storage;
+- audit event shape.
 
-```text
-+------------------------------ RANGE -------------------------------+
-|                                                                    |
-|  CacheDb::<S>::range(request, max_response_bytes, sink)            |
-|       |                                                            |
-|       +--> payload_read_session(ReadMode::Trusted)                 |
-|       |        -> open Heed read transaction                       |
-|       |        -> require Heed marker                              |
-|       |        -> no SQLite transaction                            |
-|       |                                                            |
-|       +--> validate start/end/safe time grid                       |
-|       |                                                            |
-|       +--> entity_filter One                                      |
-|       |        -> S::write_range_bounds(entity, start, end)        |
-|       |        -> Heed ordered range scan                          |
-|       |        -> enforce every expected key                       |
-|       |                                                            |
-|       +--> entity_filter Many                                     |
-|                -> validate duplicate-free entity list              |
-|                -> time-major generated point keys                  |
-|                -> Heed get_payload(key) per point                  |
-|                                                                    |
-+--------------------------------------------------------------------+
-```
+## Storage Architecture
 
-One-entity ranges use ordered Heed scans. Multi-entity ranges use generated
-point keys to preserve deterministic time-major output.
+The intake names a candidate RAG database and candidate table families. Those
+choices are not approved architecture yet.
 
-## Search Route
+Any approved storage design must separate:
 
-```text
-+------------------------------ SEARCH ------------------------------+
-|                                                                    |
-|  CacheDb::<S>::read_session(mode).search_into(request, max, sink)  |
-|       |                                                            |
-|       +--> open Heed read transaction                              |
-|       |                                                            |
-|       +--> open SQLite transaction                                 |
-|       |                                                            |
-|       +--> compare Heed marker with SQLite marker                  |
-|       |                                                            |
-|       +--> validate request time grid and safe bound               |
-|       |                                                            |
-|       +--> S::preflight_search_request(request)                    |
-|       |        -> schema-generated predicate/entity validation     |
-|       |                                                            |
-|       +--> S::search_hits_into(sqlite_txn, request, consume)       |
-|       |        -> generated SQLite query over lookup columns       |
-|       |        -> SQLite emits key-only CacheRouteHit              |
-|       |                                                            |
-|       +--> Heed get_payload(hit.key)                               |
-|       |                                                            |
-|       +--> optional audit validation                               |
-|       |                                                            |
-|       +--> sink.accept_search_mbt(key view, borrowed payload)      |
-|                                                                    |
-+--------------------------------------------------------------------+
-```
+- redacted documents;
+- redacted chunks;
+- embeddings derived from redacted or tokenized content;
+- metadata;
+- token references;
+- conversations;
+- retrieval logs;
+- audit logs;
+- encrypted sensitive values;
+- token dictionaries.
 
-SQLite is only the hit-discovery surface. If SQLite returns a key that Heed
-does not have, the route fails with a stale lookup row error.
+The storage contract must prove that AI-facing stores do not contain plaintext
+sensitive values.
 
-## Time-Machine Route
+## Encryption and Key Architecture
 
-```text
-+--------------------------- TIME-MACHINE ---------------------------+
-|                                                                    |
-|  predicate source                                                  |
-|       -> same generated hit discovery as search                    |
-|       -> for each hit, compute before/after time window            |
-|       -> generated Heed point keys                                 |
-|       -> Heed get_payload(key) for each context row                |
-|       -> sink.accept_time_machine_mbt(...)                         |
-|                                                                    |
-|  explicit hit source                                               |
-|       -> skip SQLite hit query                                     |
-|       -> use generated explicit-hit entity/time extraction         |
-|       -> same Heed context replay                                  |
-|                                                                    |
-+--------------------------------------------------------------------+
-```
+The intake lists candidate cryptographic algorithms. This document does not
+approve any algorithm.
 
-Time-machine uses the search engine only to discover hit keys when the source
-is a predicate. Explicit hits still use an indexed read session for marker
-parity, but they do not query SQLite for hits. Context replay is Heed-only. The
-current partial-window policy is `Reject`; missing context rows fail the
-request.
+Any approved encryption design must specify:
 
-## Pagination Cursor Routes
-
-```text
-+------------------------- PAGINATION CURSORS -----------------------+
-|                                                                    |
-|  range_page                                                        |
-|       -> payload-only Heed session                                 |
-|       -> validate optional cursor before scan/get work             |
-|       -> emit borrowed MBT payloads                                |
-|       -> return optional CacheRouteStats.next_cursor               |
-|                                                                    |
-|  search_page                                                       |
-|       -> indexed SQLite + Heed session                             |
-|       -> validate optional cursor before SQLite query              |
-|       -> generated SQLite key-only hit page                        |
-|       -> Heed get_payload(hit.key)                                 |
-|       -> return optional CacheRouteStats.next_cursor               |
-|                                                                    |
-|  time_machine_page                                                 |
-|       -> same generated predicate hit page as search_page          |
-|       -> Heed context replay around each hit                       |
-|       -> return optional CacheRouteStats.next_cursor               |
-|                                                                    |
-+--------------------------------------------------------------------+
-```
-
-Pagination is route metadata, not payload data. `next_cursor` is returned in
-`CacheRouteStats`; MBT bytes, projections, JSON, protobuf, and other adapter
-outputs are not modified by pagination.
-
-The cursor string is opaque to callers. Internally it is:
-
-```text
-v1|route|request_signature|generation|resolved_time_end|window_start|window_end|after_close_ms|after_entity_ordinal
-```
-
-The request signature binds:
-
-- cursor version and route;
-- generated `SCHEMA_ID`, `SCHEMA_HASH`, and `CACHE_SCHEMA_HASH`;
-- cache generation;
-- request time window;
-- page limit;
-- entity filter;
-- predicate shape for search and predicate time-machine;
-- `before`, `after`, and partial-window policy for time-machine pages.
-
-Cursor validation happens before route storage access. Route mismatch, request
-signature mismatch, generation mismatch, invalid time grid, and window mismatch
-fail without reading payload rows.
-
-Range cursors store the last emitted entity ordinal. Search and time-machine
-cursors use a generated timestamp-complete sentinel because their SQLite hit
-queries page by hit timestamp.
-
-Latest is not cursor-paged. Explicit-hit time-machine is not cursor-paged
-because the caller owns the hit list. Non-paged routes keep their existing
-response shape.
-
-Cursor encoding allocates only the returned `String`. Numeric fields are
-written directly into that final string; payload bytes are not copied. SQLite
-predicate routes still allocate request-level SQL and bind storage as part of
-query construction.
-
-Cursor route support comes from `mathilde.cache_route.cursor` in the schema
-proto. The generated adapter decides whether range, search, and time-machine
-cursor routes are available for that schema.
-
-## Generated Adapter Contract
-
-Generated adapters implement `CacheSchema`. Runtime code stays
-schema-generic; schema-specific layout is emitted from proto options.
-
-The generated adapter owns:
-
-- schema identity constants:
-  - `SCHEMA_ID`;
-  - `SCHEMA_HASH`;
-  - `CACHE_SCHEMA_HASH`;
-  - `KEY_LEN`;
-  - `TIME_STEP_MS`;
-- entity contract:
-  - entity list;
-  - entity ordinal;
-  - entity validation;
-  - route entity iteration;
-- key contract:
-  - `write_key`;
-  - `write_key_time`;
-  - `write_range_bounds`;
-  - `write_key_from_mbt`;
-  - `write_key_from_sqlite_row`;
-  - `explicit_hit_from_key`;
-- SQLite contract:
-  - `SQLITE_DDL`;
-  - lookup row insert/delete;
-  - seed lookup inserter;
-  - row count;
-  - journal clear/status/stage/recovery;
-- predicate route contract:
-  - preflight validation;
-  - key-only search hit emission;
-  - key-only search page emission;
-  - text predicate field/entity parsing when enabled;
-  - cursor entity-filter signature;
-  - predicate cursor signature;
-- validation contract:
-  - MBT validation via `MbtSchema::access_view`;
-  - fresh-seed route smoke.
-
-Generated files are command-owned and are not hand edited.
-
-## Predicate Architecture
-
-```text
-+---------------------------- PREDICATES ----------------------------+
-|                                                                    |
-|  typed predicate or predicate string                               |
-|       |                                                            |
-|       v                                                            |
-|  CachePredicate AST                                                |
-|       |                                                            |
-|       v                                                            |
-|  generated schema field/entity validation                          |
-|       |                                                            |
-|       v                                                            |
-|  generated SQLite WHERE expression                                 |
-|       |                                                            |
-|       v                                                            |
-|  key-only hits                                                     |
-|                                                                    |
-+--------------------------------------------------------------------+
-```
-
-The string parser is a convenience boundary. It is bounded before storage
-access and supports schema-known entity-qualified fields, comparison, boolean
-composition, arithmetic, `sqrt`, and `pow`.
-
-SQLite math functions are deterministic and registered at connection open.
-Invalid fields, entities, unsupported predicates, unsafe time bounds, and
-non-finite math fail before payload replay.
-
-## Checked and Trusted Access
-
-Checked access:
-
-- validates MBT bytes before deriving a key;
-- is used by point writes;
-- is available for seed and read-session audit mode.
-
-Trusted access:
-
-- is an explicit caller contract;
-- is used by public latest/range routes;
-- is available for fresh seed and read sessions when the caller has already
-  proved bytes at the correct schema boundary;
-- does not change storage format.
-
-Trusted mode does not mean unchecked cache state. Marker comparison, key
-validation, response-size caps, time-grid validation, and route failure checks
-remain active.
+- data-key and master-key ownership;
+- key wrapping behavior;
+- token matching behavior;
+- nonce or randomness requirements;
+- deterministic or probabilistic behavior where relevant;
+- rotation behavior;
+- failure behavior;
+- audit evidence;
+- dependency selection and validation.
 
 ## Failure Surfaces
 
-Important failure surfaces are explicit:
+Important failure surfaces must be explicit in specs:
 
-- missing Heed marker;
-- missing SQLite marker for indexed sessions;
-- Heed/SQLite marker mismatch;
-- unrecoverable journal state;
-- invalid generated key length;
-- invalid time grid;
-- unsafe request bound;
-- duplicate entity in `Many`;
-- missing latest payload;
-- range hole;
-- partial time-machine window;
-- stale SQLite lookup row;
-- invalid predicate syntax;
-- unsupported predicate or schema route;
-- predicate math domain error;
+- undetected sensitive value;
+- false-positive sensitive value;
+- token collision;
+- missing token dictionary entry;
+- stale token;
+- wrong tenant, client, or matter;
+- unauthorized rendering;
+- Agent Service plaintext rejection;
+- Key Service unreachable;
+- Agent Service unreachable;
+- file watcher missed event;
+- partial ingestion;
+- corrupt extracted text;
+- failed OCR or extraction;
+- embedding generation failure;
+- retrieval over stale chunks;
+- audit write failure;
 - response too large;
-- fresh seed non-empty root or empty source.
+- cancellation and retry ambiguity.
 
 ## Benchmark Boundary
 
 ```text
-+-------------------------- BENCHMARK BOUNDARY ----------------------+
-|                                                                    |
-|  benchmarks/mbt-cache-benchmarks                                   |
-|       -> benchmark-only generated MBT modules                      |
-|       -> benchmark-only generated cache adapters                   |
-|       -> dataset loaders                                           |
-|       -> evidence JSON and markdown summaries                      |
-|                                                                    |
-|  crates/mbt-cache                                                  |
-|       -> production runtime only                                   |
-|                                                                    |
-+--------------------------------------------------------------------+
++------------------------- BENCHMARK BOUNDARY -------------------------+
+|                                                                       |
+|  benchmarks                                                           |
+|       -> synthetic datasets                                           |
+|       -> file watch workloads                                         |
+|       -> detection/tokenization workloads                             |
+|       -> redaction and retrieval workloads                            |
+|       -> rendering and audit workloads                                |
+|       -> evidence JSON and markdown summaries                         |
+|                                                                       |
+|  production runtime                                                   |
+|       -> approved local-client behavior only                          |
+|                                                                       |
++-----------------------------------------------------------------------+
 ```
 
 Architecture diagrams explain intended data movement. They are not performance
@@ -547,10 +305,11 @@ dataset, profile, and output evidence.
 
 ## Non-Goals
 
-- No source-data finality guarantee.
-- No predictive semantics.
-- No general SQL query API.
-- No SQLite payload storage.
-- No handwritten schema-specific runtime branches.
-- No benchmark fixtures in the runtime crate.
-- No replacement of MBT schema validation.
+- No final legal-advice guarantee.
+- No predictive legal outcome semantics.
+- No undocumented stack lock-in.
+- No Agent Service to Key Service route.
+- No plaintext sensitive values in AI-facing routes.
+- No token dictionary or decryption-key storage in AI-facing surfaces.
+- No benchmark fixtures in production runtime.
+- No real sensitive data committed to the repository.

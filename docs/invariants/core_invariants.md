@@ -1,21 +1,10 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# MBT Cache Core Invariants
+# Wuthier Terminal Core Invariants
 
 Status: active
 Scope: entire repository
@@ -23,90 +12,119 @@ Scope: entire repository
 These invariants are mandatory unless a later approved spec explicitly narrows
 or supersedes one. Supersession must be local, justified, and audited.
 
-## Schema and Storage Invariants
+## Trust-Zone Invariants
 
-1. `.proto + MBT options + MBT Cache options` is the source of truth.
-2. MBT Cache does not define the MBT wire/archive format.
-3. Heed stores MBT payload bytes by generated cache key.
-4. SQLite stores generated key-only lookup rows and searchable predicate
-   columns.
-5. SQLite must never store MBT payload bytes.
-6. Latest and range routes must read payload bytes directly from Heed.
-7. Search and time-machine routes must use SQLite only for key discovery.
-8. Time-machine context must be built from Heed by deterministic key/range
-   logic, not from SQLite payloads.
-9. Application schemas may live outside this repository.
-10. Generated schema and adapter code must come only from approved codegen.
-11. Generated files are not edited by hand.
+1. The Human Zone contains the authorized user and trusted local client.
+2. The AI Zone contains Agent Service, RAG, embeddings, agent tools, and LLM
+   providers.
+3. The Key Zone contains key dictionaries, decryption authority, rendering
+   authorization, and key audit trails.
+4. AI Zone components must not receive plaintext sensitive values.
+5. AI Zone components must not call Key Zone routes.
+6. Key Zone functionality must not be exposed as an LLM tool.
+7. Human-visible plaintext rendering must pass through an approved
+   authorization boundary.
+8. Trust-zone boundaries must be documented before implementation.
+9. Trust-zone violations are correctness failures, not operational warnings.
 
-## Crate Boundary Invariants
+## Sensitive-Data Invariants
 
-1. `mbt_cache` is the runtime crate.
-2. `mbt_cache_codegen` is the descriptor/codegen crate.
-3. Codegen is a tool/build/dev surface, not the default runtime surface.
-4. Descriptor dependencies such as `prost-reflect` must not enter
-   `mbt_cache` unless a spec proves the need.
-5. Benchmarks, fixtures, and wide test schemas must not be part of the default
-   production runtime compile path.
-6. Runtime users must not compile unrelated generated schemas.
-7. Runtime users must not compile unrelated MBT boundary adapters.
-8. Features may be used for narrow optional behavior, but they are not the main
-   isolation mechanism for generated schemas or benches.
+1. Sensitive data classes must be declared by spec before detection or
+   redaction behavior is implemented.
+2. Plaintext sensitive values may exist only inside approved Human Zone or Key
+   Zone boundaries.
+3. Document content must be tokenized or redacted before AI-facing storage,
+   embeddings, retrieval, model access, or agent-tool access.
+4. User prompts must be tokenized before AI-facing model or tool access.
+5. AI responses must remain tokenized until an authorized rendering boundary.
+6. Conversation memory must store tokenized or redacted content only.
+7. Retrieval logs, agent logs, embeddings, and telemetry must not store
+   plaintext sensitive values.
+8. Synthetic data must be clearly marked and must not be confused with real
+   sensitive data.
+9. Real sensitive data must not be committed to the repository.
 
-## Codegen Invariants
+## Tokenization and Redaction Invariants
 
-1. Codegen output must be deterministic.
-2. Codegen input must include exact proto roots, proto file, root message, and
-   schema hash.
-3. Codegen must reject ambiguous cache annotations.
-4. Codegen must reject unsupported field/type combinations before runtime.
-5. Codegen must not emit handwritten schema-specific branches.
-6. Codegen must not infer schema intent from Rust code.
-7. Codegen must emit checked and trusted adapter surfaces as distinct APIs.
-8. Unsafe generated APIs require a documented safety contract.
-9. Codegen must keep compile surface bounded and measured for wide schemas.
-10. Generated adapters must be reproducible by a checked command.
+1. Token format, namespace, stability, and scope must be defined by spec.
+2. Token equality semantics must be deterministic when retrieval, audit, or
+   replay depends on equality.
+3. Token dictionaries must be isolated from AI-facing routes.
+4. Token collision behavior must be explicit.
+5. Missing-token behavior must be explicit.
+6. Token rotation, revocation, and stale-token behavior must be explicit when
+   supported.
+7. Redaction must preserve enough non-sensitive context for approved retrieval
+   use cases and must not invent facts.
+8. Local AI review for sensitive-data detection is optional until approved by
+   spec and must not leak plaintext to AI Zone services.
+9. Tokenization and redaction tests must cover false-positive and false-negative
+   behavior when the feature is in scope.
 
-## Runtime Invariants
+## Storage Invariants
 
-1. Inserts, upserts, deletes, and batch seeds must update Heed and SQLite as one
-   logical unit.
-2. Published fresh cache roots must be reopenable and marker-consistent.
-3. Heed and SQLite row counts must match after validated seed/build flows.
-4. Markers must detect incomplete or mismatched payload/index state.
-5. Search preflight must reject unknown entities, fields, parameters, and
-   unsupported predicates before storage access.
-6. Query output ordering must be deterministic.
-7. Safe serving semantics must come from the source system or application
-   contract; MBT Cache must not invent finality.
+1. AI-facing stores must contain only redacted or tokenized document content.
+2. Embedding stores must be built from redacted or tokenized content only.
+3. Key dictionaries must be stored separately from AI-facing stores.
+4. Encryption keys and plaintext render values must not be stored in AI-facing
+   stores.
+5. Storage schemas must identify tenant, matter, file, version, chunk,
+   conversation, retrieval, and audit boundaries when those entities are in
+   scope.
+6. Database engine choice is not approved by these invariants.
+7. Storage durability, retention, deletion, legal hold, and audit semantics must
+   be spec-bound before implementation.
+8. Stale, corrupt, partial, wrong-tenant, wrong-matter, and unauthorized records
+   must have explicit failure behavior.
 
-## Adapter Invariants
+## Client and Route Invariants
 
-1. Cache adapters consume and return MBT bytes, not serde DTO payloads.
-2. No serde payload path is allowed in runtime adapters.
-3. Optional values must preserve MBT presence semantics.
-4. Checked MBT lanes validate/access before writing cache surfaces.
-5. Trusted MBT lanes are unsafe and allowed only for already validated
-   immutable bytes.
-6. Hot adapter paths must not allocate or copy unless the spec declares the
-   copy point.
-7. All row ordering used for equality or benchmarks must be deterministic.
-8. Failure behavior must be explicit for corrupt bytes, wrong schema, old
-   version, missing payloads, missing lookup rows, and stale indexes.
+1. Wuthier Terminal is the trusted local client surface unless a later approved
+   spec splits that responsibility.
+2. File, folder, and repository watching must have explicit event semantics
+   before implementation.
+3. File create, update, delete, and move flows must be deterministic where
+   indexing or audit depends on ordering.
+4. Matter and client selection must be explicit before retrieval or rendering.
+5. Agent Service routes receive redacted or tokenized inputs only.
+6. Key Service routes receive token-rendering requests only from approved
+   callers.
+7. Agent Service credentials and Key Service credentials must be separate.
+8. No route may silently downgrade authorization, redaction, or tokenization
+   failure.
+9. Offline, degraded, retry, and cancellation behavior must be spec-bound when
+   the route is in scope.
 
-## Benchmark Invariants
+## Code Boundary Invariants
 
-1. Performance claims require run evidence.
-2. Compile-time claims require build evidence.
-3. Correctness and determinism must pass before speed claims.
-4. Baselines must use identical logical payloads.
-5. Warm-cache and cold-cache results must be separated when storage is involved.
-6. Failed and unstable runs are evidence and must not be hidden.
-7. Tolerances must not be relaxed before proving correctness.
-8. Benchmark setup work must be outside the measured loop unless the spec
-   declares it part of the measured object.
-9. Benchmark-only spool, parquet, or generated fixture surfaces must not become
-   production runtime requirements.
+1. Runtime code must stay small and focused on approved local-client behavior.
+2. Agent adapters, Key Service adapters, OCR adapters, embedding adapters,
+   database adapters, benchmarks, and fixtures are separate surfaces unless a
+   spec proves otherwise.
+3. Dependency-heavy behavior must not enter the default runtime surface without
+   a spec.
+4. Generated files are not edited by hand.
+5. Generated code must come only from approved codegen.
+6. Public APIs must be intentional and spec-bound.
+7. Configuration knobs must be spec-bound with defaults, bounds, and operator
+   meaning.
+8. Security-sensitive code paths must use explicit error handling.
+
+## Testing and Benchmark Invariants
+
+1. Privacy and trust-boundary claims require run evidence.
+2. Performance claims require run evidence.
+3. Compile-time claims require build evidence.
+4. Correctness, privacy, and determinism must pass before speed claims.
+5. Benchmark datasets must identify whether they are synthetic, anonymized, or
+   real approved data.
+6. Real sensitive data must not be used in tests or benchmarks unless a spec
+   defines storage, access, cleanup, and audit controls.
+7. Baselines must use identical logical payloads.
+8. Warm-cache and cold-cache results must be separated when storage is
+   involved.
+9. Failed and unstable runs are evidence and must not be hidden.
+10. Tolerances must not be relaxed before proving correctness.
 
 ## Documentation Invariants
 

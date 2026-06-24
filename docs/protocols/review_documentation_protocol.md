@@ -1,21 +1,10 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# PROTOCOL: MBT Cache Reviews and Documentation
+# PROTOCOL: Wuthier Terminal Reviews and Documentation
 
 Version: 1.0
 Status: active
@@ -48,6 +37,7 @@ Per slug:
 Optional when useful:
 
 - `[slug]_technical_review.md`
+- `[slug]_security_boundary_review.md`
 - `[slug]_benchmark_review.md`
 - `[slug]_failure_review.md`
 - `[slug]_compile_surface_review.md`
@@ -81,12 +71,16 @@ The result review must include:
 - status,
 - source artifacts,
 - commands run,
-- schema identity,
-- Heed and SQLite identity when relevant,
+- source data identity,
+- trust zones touched,
+- sensitive-data classes touched,
+- storage identity when relevant,
 - dataset identity when relevant,
 - correctness result,
+- privacy result,
 - determinism result,
 - persistence and recovery result when relevant,
+- authorization and audit result when relevant,
 - compile-surface result when relevant,
 - benchmark result when relevant,
 - failures,

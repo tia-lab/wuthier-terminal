@@ -1,21 +1,10 @@
 ```
-MATHILDE PROPRIETARY AND CONFIDENTIAL
-Copyright (c) 2024 MATHILDE. All Rights Reserved.
+WUTHIER TERMINAL PROPRIETARY AND CONFIDENTIAL
+Copyright (c) 2024 WUTHIER TERMINAL. All Rights Reserved.
 
-This document contains trade secrets and confidential information owned
-exclusively by MATHILDE, protected under Swiss law (URG, UWG, Art. 162 StGB).
-
-PROHIBITED: Reproduction, copying, distribution, disclosure, or derivative
-works without prior written authorization from MATHILDE.
-
-ACCESS REQUIREMENT: Executed NDA with MATHILDE required. Unauthorized access
-or possession violates Swiss law. Violations subject to civil remedies,
-injunctive relief, damages, and criminal prosecution.
-
-Legal Contact: massimo.nicora@wnlegal.ch
 ```
 
-# PROTOCOL: MBT Cache Spec Authoring
+# PROTOCOL: Wuthier Terminal Spec Authoring
 
 Version: 1.0
 Status: active
@@ -24,8 +13,8 @@ Scope: `docs/specs/*_SPEC.md`
 ## Purpose
 
 The spec is the source of truth. Implementation may not contain a behavior,
-dependency, file binding, generated artifact, benchmark, or interpretation not
-present in the spec.
+dependency, file binding, generated artifact, benchmark, security claim, or
+interpretation not present in the spec.
 
 ## Required Reads
 
@@ -36,7 +25,7 @@ present in the spec.
 - this protocol
 - target research brief
 - relevant source code
-- relevant dependency docs
+- relevant service or dependency docs
 
 ## Entry Conditions
 
@@ -61,28 +50,32 @@ Use this section order:
 3. Purpose
 4. Non-goals
 5. Measured object
-6. Source schema contract
-7. Cache schema contract
-8. Heed payload contract
-9. SQLite lookup contract
-10. Query route contract
-11. MBT I/O and trusted-access contract
-12. Codegen contract
-13. Crate boundary contract
-14. Dependency contract
-15. Determinism contract
-16. Failure contract
-17. Compile-surface budget
-18. Runtime performance budget
-19. Correctness oracle
-20. Benchmark methodology
-21. Test plan
-22. Code bindings
-23. Generated artifact bindings
-24. Review artifact bindings
-25. Implementation plan requirement
-26. Approval checklist
-27. Open questions
+6. Source data contract
+7. Sensitive-data classification contract
+8. Tokenization contract
+9. Redaction contract
+10. Trust-zone contract
+11. Agent Service boundary contract
+12. Key Service boundary contract
+13. Storage contract
+14. Prompt and conversation contract
+15. Rendering authorization and audit contract
+16. Codegen or generated-artifact contract
+17. Crate and service boundary contract
+18. Dependency contract
+19. Determinism contract
+20. Failure contract
+21. Compile-surface budget
+22. Runtime performance budget
+23. Correctness and privacy oracle
+24. Benchmark methodology
+25. Test plan
+26. Code bindings
+27. Generated and evidence artifact bindings
+28. Review artifact bindings
+29. Implementation plan requirement
+30. Approval checklist
+31. Open questions
 
 ## Pre-Audit Closure Gate
 
@@ -98,15 +91,17 @@ The first spec draft must explicitly verify:
   ownership of check/write/inspect behavior;
 - every generated artifact has one owner and one reproducibility command;
 - no generated artifact is bound to two incompatible command surfaces;
-- every runtime or codegen dispatch path that must change is listed in code
-  bindings;
+- every runtime, service-adapter, or dispatch path that must change is listed
+  in code bindings;
 - every test that encodes old behavior is either preserved or explicitly
   migrated to the new behavior;
 - every exact code path needed for the change is bound before the audit;
 - no design decision is deferred to the implementation plan when it belongs in
   the spec;
 - if the spec touches generated code, compile-surface evidence commands are
-  defined before the audit.
+  defined before the audit;
+- if the spec touches sensitive data, privacy and authorization proof commands
+  are defined before the audit.
 
 The spec must include a short "pre-audit closure checklist" under the approval
 checklist or a task-specific equivalent section. If this checklist is missing
@@ -122,7 +117,8 @@ The spec must bind exact paths for:
 - test files,
 - benchmark files,
 - review artifacts,
-- temporary data directories.
+- temporary data directories,
+- security-boundary evidence artifacts.
 
 If a path is intentionally deferred, the spec must say why and name the
 blocker.
@@ -131,38 +127,34 @@ blocker.
 
 A generated-code spec must define:
 
-- proto source roots,
-- imported MBT and MBT Cache options,
-- root message,
-- generated crate or module destination,
-- deterministic formatting,
-- generated API surface,
-- unsupported schema and cache type combinations,
-- schema hash behavior,
-- compile-surface budget,
-- codegen-check command.
+- source contract and owner;
+- generated crate or module destination;
+- deterministic formatting;
+- generated API surface;
+- unsupported input combinations;
+- schema or contract hash behavior when relevant;
+- compile-surface budget;
+- codegen-check command;
+- privacy constraints for generated outputs.
 
-## Storage and Adapter Requirements
+## Storage and Route Requirements
 
-A storage or adapter spec must define:
+A storage, client route, Agent Service route, or Key Service route spec must
+define:
 
-- cache schema name,
-- Heed key layout,
-- SQLite lookup table name,
-- SQLite key columns,
-- SQLite searchable predicate columns,
-- SQLite indexes,
-- latest/range Heed route contract,
-- search/time-machine key-only SQLite contract,
-- time-machine context replay contract,
-- checked and trusted MBT access policy,
-- allowed copy points,
-- forbidden copy points,
-- corrupt payload behavior,
-- wrong-schema behavior,
-- old-version behavior,
-- missing-payload and missing-lookup-row behavior,
-- benchmark baseline.
+- data classes stored or transmitted;
+- plaintext, tokenized, redacted, encrypted, and derived-data boundaries;
+- tenant, matter, user, file, chunk, conversation, and audit keys when relevant;
+- allowed caller and callee trust zones;
+- authorization and audit behavior;
+- retry, cancellation, offline, and degraded behavior when relevant;
+- allowed copy points;
+- forbidden copy points;
+- corrupt input behavior;
+- wrong-tenant and wrong-matter behavior;
+- stale-token and missing-token behavior;
+- unauthorized rendering behavior;
+- benchmark baseline when performance is claimed.
 
 ## Approval Checklist
 
@@ -171,11 +163,12 @@ A spec is not implementation-ready until all are true:
 - required reads complete,
 - pre-audit closure gate satisfied before the first peer audit,
 - measured object precise,
-- correctness oracle defined,
-- benchmark method defined,
-- compile-surface budget defined when generated code is touched,
+- correctness and privacy oracle defined,
+- benchmark method defined when performance is claimed,
+- compile-surface budget defined when generated code or dependency-heavy code
+  is touched,
 - code bindings exact,
-- generated artifact bindings exact,
+- generated and evidence artifact bindings exact,
 - test and review bindings exact,
 - peer audit passed,
 - implementation plan still required before code.
@@ -185,11 +178,14 @@ A spec is not implementation-ready until all are true:
 Stop if:
 
 - pre-audit closure gate is incomplete,
-- the spec depends on unverified library behavior,
-- schema or storage semantics are unclear,
-- Heed payload semantics are unclear when payload storage is in scope,
-- SQLite lookup semantics are unclear when search or time-machine is in scope,
-- correctness oracle is missing,
+- the spec depends on unverified library or service behavior,
+- sensitive-data, tokenization, or redaction semantics are unclear,
+- trust-zone route boundaries are unclear,
+- Agent Service behavior is unclear when AI-facing work is in scope,
+- Key Service behavior is unclear when rendering or token dictionaries are in
+  scope,
+- authorization or audit behavior is unclear,
+- correctness and privacy oracle is missing,
 - benchmark does not isolate the intended measurement,
 - compile-surface impact is ignored,
 - code bindings are missing,
