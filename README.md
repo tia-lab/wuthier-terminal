@@ -22,6 +22,7 @@ implementation plans, and evidence before implementation.
 
 - `AGENTS.md`
 - `initial-intake.md`
+- `architecture-public.md`
 - `docs/invariants/core_invariants.md`
 - `docs/protocols/lifecycle_protocol.md`
 - task-specific protocol files under `docs/protocols/`
